@@ -1,0 +1,47 @@
+graphical
+
+%addon com_redhat_kdump --disable
+%end
+
+%packages
+@^workstation-product-environment
+ansible-core
+%end
+
+syspurpose --role="Red Hat Enterprise Linux Workstation" --sla="Self-Support" --usage="Development/Test"
+rhsm --organization="{{rh_organization_id}}" --activation-key="{{rh_activation_key}}"
+
+keyboard --xlayouts="{{keyboard_layout}}"
+lang "{{language}}"
+timezone "{{timezone}}" --utc
+
+clearpart --all --initlabel
+part /boot/efi --fstype=efi --size=512 --fsoptions="umask=0077,shortname=winnt"
+part swap --fstype=swap --size=8192
+part / --fstype=xfs --grow
+
+rootpw "{{user_password}}"
+group --name=docker
+user --groups="wheel,docker" --name="{{user_name}}" --password="{{user_password}}" --gecos="{{user_full_name}}"
+
+firstboot --enable
+selinux --disable
+network --hostname=workstation --bootproto=dhcp --device="{{network_device}}" --onboot=yes --activate
+
+{% if network_type == 'wifi' %}
+%pre --erroronfail --log=/mnt/sysimage/var/log/kickstart-pre.log
+nmcli device wifi connect "{{network_name}}" password "{{network_password}}" ifname "{{network_device}}"
+%end
+{% endif %}
+
+%post --nochroot --erroronfail --log=/mnt/sysimage/var/log/kickstart-post.log
+mkdir -p /mnt/sysimage/etc/ansible/host_vars
+cp /run/install/repo/vars.yml /mnt/sysimage/etc/ansible/host_vars/localhost
+%end
+
+%post --erroronfail --log=/var/log/kickstart-post.log
+echo "localhost ansible_connection=local ansible_user={{user_name}}" > /etc/ansible/hosts
+ansible-galaxy collection install git+https://github.com/eugeniodepalo/workstation-collection.git
+ansible-galaxy install -r ~/.ansible/collections/ansible_collections/eugeniodepalo/workstation/playbooks/meta/requirements.yml
+ansible-playbook eugeniodepalo.workstation.main -e "ansible_become_pass={{user_password}}" -u "{{user_name}}"
+%end

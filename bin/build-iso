@@ -1,0 +1,41 @@
+#!/bin/bash
+
+set -e
+
+root_dir="$(dirname "$(readlink -f "$0")")/.."
+sudo true
+
+echo -n "Building ISO..."
+
+sudo umount "$root_dir/tmp/iso" 2>/dev/null || true
+rm -rf "$root_dir/tmp"
+rm -rf "$root_dir/build"
+
+mkdir -p "$root_dir/tmp/iso"
+mkdir -p "$root_dir/tmp/build"
+mkdir -p "$root_dir/build"
+sudo mount -o loop rhel-baseos-9.0-x86_64-dvd.iso "$root_dir/tmp/iso" 2>/dev/null
+rsync -avhq "$root_dir/tmp/iso/" "$root_dir/tmp/build/"
+chmod -R +w "$root_dir/tmp/build"
+rm -rf "$root_dir/tmp/build/isolinux"
+cp "$root_dir/grub.cfg" "$root_dir/tmp/build/EFI/BOOT/grub.cfg"
+cp "$root_dir/vars.yml" "$root_dir/tmp/build/vars.yml"
+cat "$root_dir/env.defaults.yml" "$root_dir/env.yml" | p2 -t kickstart.cfg.j2 -f yaml > "$root_dir/tmp/build/kickstart.cfg"
+
+mkisofs \
+  -o "$root_dir/build/rhel9-workstation.iso" \
+  -J -R -l \
+  -eltorito-alt-boot \
+  -e images/efiboot.img \
+  -no-emul-boot \
+  -graft-points \
+  -quiet \
+  -V "RHEL-9-0-0-BaseOS-x86_64" \
+  "$root_dir/tmp/build" \
+  2>/dev/null
+
+implantisomd5 "$root_dir/build/rhel9-workstation.iso" 1>/dev/null
+sudo umount "$root_dir/tmp/iso"
+rm -rf "$root_dir/tmp"
+
+echo " done."

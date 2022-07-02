@@ -1,0 +1,5 @@
+/build
+/tmp
+/vars.yml
+/env.yml
+*.iso
