@@ -44,6 +44,5 @@ device_id=$(head -c 16 /dev/urandom | base32 | tr -d = | tr '[:upper:]' '[:lower
 echo "ws_1password_device: $device_id" >> /etc/ansible/host_vars/localhost
 echo "localhost ansible_connection=local ansible_user={{user_name}}" > /etc/ansible/hosts
 ansible-galaxy collection install git+https://github.com/eugeniodepalo/workstation-collection.git
-ansible-galaxy install -r ~/.ansible/collections/ansible_collections/eugeniodepalo/workstation/playbooks/meta/requirements.yml
 ansible-playbook eugeniodepalo.workstation.main -e "ansible_become_pass={{user_password}}" -u "{{user_name}}"
 %end
