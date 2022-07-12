@@ -15,9 +15,9 @@ keyboard --xlayouts="{{keyboard_layout}}"
 lang "{{language}}"
 timezone "{{timezone}}" --utc
 
-clearpart --all --initlabel
-part /boot/efi --fstype=efi --size=512 --fsoptions="umask=0077,shortname=winnt"
-part swap --fstype=swap --size=8192
+clearpart --none --initlabel
+part /boot/efi --fstype=efi --recommended --fsoptions="umask=0077,shortname=winnt"
+part swap --fstype=swap --recommended
 part / --fstype=xfs --grow
 
 rootpw "{{user_password}}"
@@ -44,5 +44,4 @@ device_id=$(head -c 16 /dev/urandom | base32 | tr -d = | tr '[:upper:]' '[:lower
 echo "ws_1password_device: $device_id" >> /etc/ansible/host_vars/localhost
 echo "localhost ansible_connection=local ansible_user={{user_name}}" > /etc/ansible/hosts
 runuser -l "{{user_name}}" -c "ansible-galaxy collection install git+https://github.com/eugeniodepalo/workstation-collection.git"
-runuser -l "{{user_name}}" -c "ansible-playbook eugeniodepalo.workstation.main -e 'ansible_become_pass={{user_password}}'"
 %end
