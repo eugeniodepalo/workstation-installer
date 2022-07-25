@@ -15,8 +15,15 @@ keyboard --xlayouts="{{keyboard_layout}}"
 lang "{{language}}"
 timezone "{{timezone}}" --utc
 
-clearpart --none --initlabel
-part /boot/efi --fstype=efi --recommended --fsoptions="umask=0077,shortname=winnt"
+{% if efi_partition %}
+part /boot/efi --onpart {{efi_partition}} --noformat
+clearpart --linux --initlabel
+{% else %}
+part /boot/efi --fstype=efi --fsoptions="umask=0077,shortname=winnt" --recommended
+clearpart --all --initlabel
+{% endif %}
+
+part /boot --fstype=xfs --size=1024
 part swap --fstype=swap --recommended
 part / --fstype=xfs --grow
 
