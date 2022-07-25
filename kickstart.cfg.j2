@@ -16,7 +16,7 @@ lang "{{language}}"
 timezone "{{timezone}}" --utc
 
 clearpart --none --initlabel
-part /boot/efi --fstype=efi --recommended --fsoptions="umask=0077,shortname=winnt"
+part /boot/efi --fstype=efi --fsoptions="umask=0077,shortname=winnt" --recommended
 part swap --fstype=swap --recommended
 part / --fstype=xfs --grow
 
