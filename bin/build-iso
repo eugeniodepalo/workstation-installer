@@ -5,6 +5,9 @@ set -e
 root_dir="$(dirname "$(readlink -f "$0")")/.."
 sudo true
 
+echo "Installing dependencies..."
+sudo dnf install -y isomd5sum genisoimage
+
 echo -n "Building ISO..."
 
 sudo umount "$root_dir/tmp/iso" 2>/dev/null || true
