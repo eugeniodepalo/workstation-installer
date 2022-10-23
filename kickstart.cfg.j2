@@ -11,18 +11,12 @@ ansible-core
 syspurpose --role="Red Hat Enterprise Linux Workstation" --sla="Self-Support" --usage="Development/Test"
 rhsm --organization="{{rh_organization_id}}" --activation-key="{{rh_activation_key}}"
 
-keyboard --xlayouts="{{keyboard_layout}}"
-lang "{{language}}"
-timezone "{{timezone}}" --utc
+keyboard --xlayouts=us
+lang en-US.UTF-8
+timezone Europe/London --utc
 
-{% if efi_partition %}
-part /boot/efi --onpart {{efi_partition}} --noformat
+part /boot/efi --onpart /dev/nvme0n1p1 --noformat
 clearpart --linux --initlabel
-{% else %}
-part /boot/efi --fstype=efi --fsoptions="umask=0077,shortname=winnt" --recommended
-clearpart --all --initlabel
-{% endif %}
-
 part /boot --fstype=xfs --size=1024
 part swap --fstype=swap --recommended
 part / --fstype=xfs --grow
@@ -33,13 +27,11 @@ user --groups="wheel,docker" --name="{{user_name}}" --password="{{user_password}
 
 firstboot --enable
 selinux --disable
-network --hostname=workstation --bootproto=dhcp --device="{{network_device}}" --onboot=yes --activate
+network --hostname=workstation --bootproto=dhcp --device=wlo1 --onboot=yes --activate
 
-{% if network_type == 'wifi' %}
 %pre --erroronfail --log=/mnt/sysimage/var/log/kickstart-pre.log
-nmcli device wifi connect "{{network_name}}" password "{{network_password}}" ifname "{{network_device}}"
+nmcli device wifi connect "{{network_name}}" password "{{network_password}}" ifname wlo1
 %end
-{% endif %}
 
 %post --nochroot --erroronfail --log=/mnt/sysimage/var/log/kickstart-post.log
 mkdir -p /mnt/sysimage/etc/ansible/host_vars
@@ -47,8 +39,6 @@ cp /run/install/repo/vars.yml /mnt/sysimage/etc/ansible/host_vars/localhost
 %end
 
 %post --erroronfail --log=/var/log/kickstart-post.log
-device_id=$(head -c 16 /dev/urandom | base32 | tr -d = | tr '[:upper:]' '[:lower:]')
-echo "ws_1password_device: $device_id" >> /etc/ansible/host_vars/localhost
 echo "localhost ansible_connection=local ansible_user={{user_name}}" > /etc/ansible/hosts
 runuser -l "{{user_name}}" -c "ansible-galaxy collection install git+https://github.com/eugeniodepalo/workstation-collection.git"
 %end
