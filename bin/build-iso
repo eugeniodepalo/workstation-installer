@@ -3,6 +3,7 @@
 set -e
 
 root_dir="$(dirname "$(readlink -f "$0")")/.."
+device_id=$(head -c 16 /dev/urandom | base32 | tr -d = | tr '[:upper:]' '[:lower:]')
 sudo true
 
 echo "Installing dependencies..."
@@ -23,6 +24,7 @@ chmod -R +w "$root_dir/tmp/build"
 rm -rf "$root_dir/tmp/build/isolinux"
 cp "$root_dir/grub.cfg" "$root_dir/tmp/build/EFI/BOOT/grub.cfg"
 cp "$root_dir/vars.yml" "$root_dir/tmp/build/vars.yml"
+echo "ws_1password_device: $device_id" >> "$root_dir/tmp/build/vars.yml"
 cat "$root_dir/env.defaults.yml" "$root_dir/env.yml" | p2 -t kickstart.cfg.j2 -f yaml > "$root_dir/tmp/build/kickstart.cfg"
 
 mkisofs \
